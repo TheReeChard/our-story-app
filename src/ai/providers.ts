@@ -23,7 +23,7 @@ export const PROVIDERS: ProviderInfo[] = [
   {
     id: 'openai',
     label: 'OpenAI',
-    defaultModel: 'gpt-6.1-sol',
+    defaultModel: 'gpt-6',
     keyHelp: 'Get a key at platform.openai.com',
     keyPlaceholder: 'sk-…',
   },
