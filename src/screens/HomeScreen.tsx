@@ -21,6 +21,7 @@ interface Props {
   onOpenPhoto: (id: string) => void;
   onCaptionNext: () => void;
   onDeleteAll: () => void;
+  onOpenSettings: () => void;
 }
 
 const GAP = 8;
@@ -33,6 +34,7 @@ export function HomeScreen({
   onOpenPhoto,
   onCaptionNext,
   onDeleteAll,
+  onOpenSettings,
 }: Props) {
   const { width } = useWindowDimensions();
   const size = (width - 32 - GAP * (COLS - 1)) / COLS;
@@ -56,6 +58,9 @@ export function HomeScreen({
         <Text style={styles.subtitle}>
           Photos that show your relationship over time, each with a short caption in your own words.
         </Text>
+        <Pressable onPress={onOpenSettings} hitSlop={8}>
+          <Text style={styles.settingsLink}>⚙ AI settings</Text>
+        </Pressable>
       </View>
 
       {photos.length > 0 && (
@@ -147,6 +152,7 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8 },
   title: { fontSize: 30, fontWeight: '700', color: colors.ink },
   subtitle: { fontSize: 15, color: colors.muted, marginTop: 4, lineHeight: 21 },
+  settingsLink: { color: colors.accent, fontSize: 14, fontWeight: '600', marginTop: 10 },
   stats: {
     flexDirection: 'row',
     marginHorizontal: 16,

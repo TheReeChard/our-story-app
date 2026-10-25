@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { CaptionScreen } from './src/screens/CaptionScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
 import {
   deleteEverything,
   deletePhotoFile,
@@ -22,6 +23,7 @@ export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     loadPhotos().then((p) => {
@@ -129,6 +131,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
+      <View style={{ flex: 1 }}>
       {current ? (
         <CaptionScreen
           key={current.id}
@@ -138,6 +141,7 @@ export default function App() {
           onSkip={handleSkip}
           onDelete={handleDelete}
           onBack={() => setOpenId(null)}
+          onOpenSettings={() => setShowSettings(true)}
         />
       ) : (
         <HomeScreen
@@ -150,8 +154,15 @@ export default function App() {
             if (next) setOpenId(next.id);
           }}
           onDeleteAll={handleDeleteAll}
+          onOpenSettings={() => setShowSettings(true)}
         />
       )}
+        {showSettings && (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: '#FBF8F5' }]}>
+            <SettingsScreen onBack={() => setShowSettings(false)} />
+          </View>
+        )}
+      </View>
     </SafeAreaProvider>
   );
 }

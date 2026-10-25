@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -16,6 +17,7 @@ import { CATEGORIES, type Category, type EvidencePhoto } from '../types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius } from '../theme';
 import { formatDate, isValidIsoDate } from '../exif';
+import { loadAiSettings, suggestCaption } from '../ai/providers';
 
 interface Props {
   photo: EvidencePhoto;
@@ -24,6 +26,7 @@ interface Props {
   onSkip: () => void;
   onDelete: (id: string) => void;
   onBack: () => void;
+  onOpenSettings: () => void;
 }
 
 /** Light cleanup only: trim, capitalize the first letter, end with a period. Never adds facts. */
@@ -34,13 +37,16 @@ export function tidyCaption(text: string): string {
   return /[.!?]$/.test(cap) ? cap : cap + '.';
 }
 
-export function CaptionScreen({ photo, position, onSave, onSkip, onDelete, onBack }: Props) {
+export function CaptionScreen({ photo, position, onSave, onSkip, onDelete, onBack, onOpenSettings }: Props) {
   const [note, setNote] = useState(photo.note);
   const [caption, setCaption] = useState(photo.caption);
   const [captionEdited, setCaptionEdited] = useState(photo.captioned);
   const [dateText, setDateText] = useState(photo.date ?? '');
   const [category, setCategory] = useState<Category | null>(photo.category);
   const [both, setBoth] = useState(photo.bothSpousesVisible);
+  const [source, setSource] = useState<'couple' | 'ai' | 'ai-edited'>(photo.captionSource ?? 'couple');
+  const [suggesting, setSuggesting] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const onNoteChange = (t: string) => {
     setNote(t);
@@ -50,6 +56,43 @@ export function CaptionScreen({ photo, position, onSave, onSkip, onDelete, onBac
   const dateTrim = dateText.trim();
   const dateValid = dateTrim === '' || isValidIsoDate(dateTrim);
   const canSave = caption.trim().length > 0 && dateValid;
+
+  const suggest = async () => {
+    const s = await loadAiSettings();
+    if (!s.apiKey) {
+      Alert.alert('Set up AI first', 'Add an API key in AI settings to get caption suggestions.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'AI settings', onPress: onOpenSettings },
+      ]);
+      return;
+    }
+    const run = async () => {
+      setSuggesting(true);
+      setAiError(null);
+      try {
+        const text = await suggestCaption(photo.uri, {
+          dateText: dateTrim && dateValid ? formatDate(dateTrim) : undefined,
+          note: note.trim() || undefined,
+          category: CATEGORIES.find((c) => c.key === category)?.label,
+        });
+        setCaption(text);
+        setCaptionEdited(true);
+        setSource('ai');
+      } catch (e) {
+        setAiError(e instanceof Error ? e.message : 'The suggestion failed. Try again.');
+      } finally {
+        setSuggesting(false);
+      }
+    };
+    if (caption.trim() && captionEdited) {
+      Alert.alert('Replace your caption?', 'The AI suggestion will replace the caption you have now.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Replace', onPress: run },
+      ]);
+    } else {
+      run();
+    }
+  };
 
   const save = (goNext: boolean) => {
     if (!canSave) return;
@@ -64,6 +107,7 @@ export function CaptionScreen({ photo, position, onSave, onSkip, onDelete, onBac
         date: dateTrim === '' ? null : dateTrim,
         dateSource: dateTrim === '' ? 'none' : hasExifDate ? 'exif' : 'couple',
         captioned: true,
+        captionSource: source,
       },
       goNext,
     );
@@ -141,14 +185,31 @@ export function CaptionScreen({ photo, position, onSave, onSkip, onDelete, onBac
 
           <Text style={styles.label}>Caption for your exhibit</Text>
           <Text style={styles.hint}>
-            Written by you. This is what appears next to the photo. Edit it freely.
+            {source === 'ai'
+              ? 'Suggested by AI from your photo. Read it, and change anything that is not right.'
+              : source === 'ai-edited'
+                ? 'Started from an AI suggestion and edited by you.'
+                : 'Written by you. This is what appears next to the photo. Edit it freely.'}
           </Text>
+          <Pressable
+            style={[styles.aiBtn, suggesting && styles.disabled]}
+            onPress={suggest}
+            disabled={suggesting}
+          >
+            {suggesting ? (
+              <ActivityIndicator color={colors.accent} />
+            ) : (
+              <Text style={styles.aiBtnText}>✨ Suggest caption</Text>
+            )}
+          </Pressable>
+          {aiError && <Text style={styles.error}>{aiError}</Text>}
           <TextInput
             style={[styles.input, styles.multiline]}
             value={caption}
             onChangeText={(t) => {
               setCaption(t);
               setCaptionEdited(true);
+              setSource((prev) => (prev === 'couple' ? 'couple' : 'ai-edited'));
             }}
             placeholder="One short line"
             multiline
@@ -231,6 +292,14 @@ const styles = StyleSheet.create({
   inputError: { borderColor: colors.danger },
   error: { color: colors.danger, fontSize: 13, marginTop: 4 },
   multiline: { minHeight: 80 },
+  aiBtn: {
+    marginTop: 10,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: colors.accentSoft,
+  },
+  aiBtnText: { color: colors.accent, fontWeight: '600', fontSize: 15 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
   chip: {
     paddingVertical: 8,

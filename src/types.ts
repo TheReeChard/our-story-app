@@ -32,5 +32,7 @@ export interface EvidencePhoto {
   /** Manually confirmed for now; replaced by an on-device face check in the next step */
   bothSpousesVisible: boolean;
   captioned: boolean;
+  /** Where the caption text came from. 'ai' means saved as suggested, 'ai-edited' means changed by the couple. */
+  captionSource?: 'couple' | 'ai' | 'ai-edited';
   addedAt: string;
 }
