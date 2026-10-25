@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { CaptionScreen } from './src/screens/CaptionScreen';
@@ -126,7 +127,7 @@ export default function App() {
   const current = openId ? photos.find((p) => p.id === openId) : undefined;
 
   return (
-    <>
+    <SafeAreaProvider>
       <StatusBar style="dark" />
       {current ? (
         <CaptionScreen
@@ -151,6 +152,6 @@ export default function App() {
           onDeleteAll={handleDeleteAll}
         />
       )}
-    </>
+    </SafeAreaProvider>
   );
 }

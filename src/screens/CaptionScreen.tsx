@@ -5,7 +5,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Switch,
@@ -14,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { CATEGORIES, type Category, type EvidencePhoto } from '../types';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius } from '../theme';
 import { formatDate, isValidIsoDate } from '../exif';
 
@@ -81,7 +81,7 @@ export function CaptionScreen({ photo, position, onSave, onSkip, onDelete, onBac
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
       >
         <View style={styles.topBar}>
           <Pressable onPress={onBack} hitSlop={12}>

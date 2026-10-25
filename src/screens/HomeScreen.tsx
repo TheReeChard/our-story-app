@@ -4,13 +4,13 @@ import {
   FlatList,
   Image,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
   useWindowDimensions,
 } from 'react-native';
 import type { EvidencePhoto } from '../types';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius } from '../theme';
 import { formatDate } from '../exif';
 
